@@ -246,11 +246,22 @@ BEGIN
     TRUNCATE TABLE Employee,
     Drop table Clients,
     Drop table Department,
-    Drop table Employee CASCADE CONSTRAINTS;;
+    Drop table Employee CASCADE CONSTRAINTS;
 END; 
 
 EXECUTE DeleteInformation_DropTable;
 
- 
+SAVEPOINT < BeforeRollBack >;
+
+    Drop table Clients,
+    Drop table Department,
+    Drop table Employee CASCADE CONSTRAINTS;
+    
+ROLLBACK [TO SAVEPOINT < BeforeRollBack>]; 
+
+
+
+
+
 
 
