@@ -49,7 +49,6 @@ INSERT INTO Employee(FirstName,LastName,Salary,JobTitle,Manager_ID,Address,Hire_
 VALUES
 ('Victoria','Raztsvetnikova',2500,'Senior',5,'Varna',TO_DATE('2011-11-11', 'yyyy/mm/dd'),2 );
 
-
 INSERT INTO Employee(FirstName,LastName,Salary,JobTitle,Manager_ID,Address,Hire_Date, Department_ID)
 VALUES
 ('Stefani','Stefanova',3000,'Junior',8,'Plovdiv',TO_DATE('2009-09-09', 'yyyy/mm/dd'),3 );
@@ -57,6 +56,10 @@ VALUES
 INSERT INTO Employee(FirstName,LastName,Salary,JobTitle,Manager_ID,Address,Hire_Date, Department_ID)
 VALUES
 ('Ivanka','Ivanova',5000,'Senior',8,'Pernik',TO_DATE('1996-09-09', 'yyyy/mm/dd'),3 );
+
+INSERT INTO Employee(FirstName,LastName,Salary,JobTitle,Manager_ID,Address,Hire_Date, Department_ID)
+VALUES
+('Sashka','Sashkova',5000,'Junior',8,'Pernik',TO_DATE('1998-06-09', 'yyyy/mm/dd'),1 );
 
 
 INSERT INTO Clients(Username,Password,Last_Login)
@@ -68,7 +71,14 @@ VALUES('Pesho','12345',TO_DATE('2020-02-03', 'yyyy/mm/dd'));
 INSERT INTO Clients(Username,Password,Last_Login)
 VALUES('Gosho','12345',TO_DATE('2020-01-01', 'yyyy/mm/dd'));
 
+INSERT INTO Clients(Username,Password,Last_Login)
+VALUES('Gosho','12345',TO_DATE('2020-02-18', 'yyyy/mm/dd'));
 
+INSERT INTO Clients(Username,Password,Last_Login)
+VALUES('Gosho','12345',TO_DATE('2020-02-17', 'yyyy/mm/dd'));
+
+INSERT INTO Clients(Username,Password,Last_Login)
+VALUES('Tosho','12345',TO_DATE('2010-01-01', 'yyyy/mm/dd'));
 
 /*?	Find information about all departments names*/
 SELECT Name FROM Department;
@@ -98,7 +108,7 @@ WHERE FirstName LIKE 'S__%';
 SELECT * FROM Employee
 WHERE FirstName LIKE '%l%';
 
-/*?	Find all employees that have a salary in the range 2000 � 3000*/
+/*?	Find all employees that have a salary in the range 2000 – 3000*/
 SELECT * FROM Employee
 WHERE Salary < 3000 AND Salary > 2000;
 
@@ -139,7 +149,108 @@ ON E.MANAGER_ID = M.EMPLOYEE_ID
 GROUP BY E.FirstName,M.FirstName,M.Address;
 
 /*?	Find all departments and all town names as a single list*/
+SELECT NAME,TOWN_NAME 
+FROM DEPARTMENT;
+
+/*●	Find all of the employees and the manager for each of them along with the employees that do not have a manager*/
+SELECT E.FirstName,M.FirstName
+FROM EMPLOYEE E LEFT JOIN EMPLOYEE M
+ON E.MANAGER_ID = M.EMPLOYEE_ID
+GROUP BY E.FirstName,M.FirstName;
+
+/*●	Find all employees from “Sales” and all from “Finance” who are hired between 1995 and 2005*/
+SELECT E.FirstName, D.NAME
+FROM EMPLOYEE E JOIN DEPARTMENT D
+ON E.DEPARTMENT_ID = D.DEPARMENT_ID
+WHERE D.NAME = 'Sales' OR D.NAME = 'Finance' AND HIRE_DATE BETWEEN TO_DATE ('1995/01/01', 'yyyy/mm/dd') AND TO_DATE ('2005/01/01', 'yyyy/mm/dd')
+GROUP BY E.FirstName,D.NAME;
+
+/*●	Find the full name and salary of the employee that takes minimal salary in the company.*/
+SELECT *
+FROM (select FirstName,LastName,Salary from Employee ORDER BY Salary ASC) suppliers2
+WHERE rownum <= 1
+ORDER BY rownum;
+
+/*●	Find the names and the salary of the employees that have a salary that is up to 10% higher than the minimum salary for the company*/
+SELECT FirstName,LastName,Salary
+FROM EMPLOYEE
+WHERE SALARY > 0.1*(SELECT MIN(SALARY) FROM EMPLOYEE) + (SELECT MIN(SALARY) FROM EMPLOYEE)
+GROUP BY FirstName,LastName,Salary;
 
 
+/*●	Find the full name salary and the department of the employees that take the minimum salary in their department.*/
+
+SELECT E.FIRSTNAME,E.SALARY,D.NAME
+FROM EMPLOYEE E JOIN DEPARTMENT D
+ON E.DEPARTMENT_ID = D.DEPARMENT_ID
+GROUP BY D.NAME,E.FIRSTNAME,E.SALARY
+HAVING SALARY = ANY(SELECT MIN(SALARY) FROM EMPLOYEE E JOIN DEPARTMENT D ON E.DEPARTMENT_ID = D.DEPARMENT_ID GROUP BY D.DEPARMENT_ID);
+
+SELECT *FROM EMPLOYEE;
+
+
+/*●	Find the average salary in all department list the department name and the average salary*/
+SELECT D.NAME,AVG(SALARY)
+FROM DEPARTMENT D JOIN EMPLOYEE
+ON D.DEPARMENT_ID = EMPLOYEE.DEPARTMENT_ID
+GROUP BY D.NAME;
+
+/*●	Find the number of employee in all the departments. List the department and the number of employees in it*/
+SELECT D.NAME,COUNT(E.DEPARTMENT_ID) AS NumberOfEmployees
+FROM EMPLOYEE E JOIN DEPARTMENT D
+ON E.DEPARTMENT_ID = D.DEPARMENT_ID
+GROUP BY D.NAME;
+
+/*●	Group all employee by the manager*/
+SELECT E.FirstName,M.FirstName
+FROM EMPLOYEE E JOIN EMPLOYEE M
+ON E.MANAGER_ID = M.EMPLOYEE_ID
+GROUP BY E.FirstName,M.FirstName;
+
+/*●	Find all employees whose names are exactly 5 characters*/
+SELECT FirstName FROM EMPLOYEE
+WHERE LENGTH(FirstName) = 5;
+
+/*●	Create a view that shows all clients that have been in the system today*/
+CREATE VIEW LogToday AS
+  SELECT USERNAME
+  FROM CLIENTS
+  WHERE LAST_LOGIN  > SYSDATE - 24/24;
+  
+SELECT * FROM LogToday;
+
+/*●	Change the passwords of all clients that are absent from the system since 10.03.2010*/
+UPDATE Clients 
+SET Password = '54321'
+WHERE Last_Login < TO_DATE ('2010/03/10', 'yyyy/mm/dd');
+
+select * from clients
+
+/*●	Delete all clients without password*/
+DELETE FROM CLIENTS
+WHERE PASSWORD = '';
+
+/*●	Display the town with max employees */
+SELECT MAX (NumberOfEmployees) 
+FROM (SELECT E.DEPARTMENT_ID,COUNT(E.DEPARTMENT_ID) AS NumberOfEmployees
+FROM EMPLOYEE E JOIN DEPARTMENT D
+ON E.DEPARTMENT_ID = D.DEPARMENT_ID
+GROUP BY E.DEPARTMENT_ID);
+
+/*Create a transaction that deletes the information from the tables, drop all the tables and reroll the transaction at the end of the process*/
+CREATE PROCEDURE DropTable_DeleteInformation
+AS
+BEGIN 
+    TRUNCATE TABLE Clients,
+    TRUNCATE TABLE Department,
+    TRUNCATE TABLE Employee,
+    Drop table Clients,
+    Drop table Department,
+    Drop table Employee CASCADE CONSTRAINTS;;
+END; 
+
+EXECUTE DeleteInformation_DropTable;
+
+ 
 
 
