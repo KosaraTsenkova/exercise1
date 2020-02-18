@@ -202,10 +202,10 @@ ON E.DEPARTMENT_ID = D.DEPARMENT_ID
 GROUP BY D.NAME;
 
 /*●	Group all employee by the manager*/
-SELECT E.FirstName,M.FirstName
+SELECT M.FirstName, COUNT(M.EMPLOYEE_ID) AS NumberOfEmployees
 FROM EMPLOYEE E JOIN EMPLOYEE M
 ON E.MANAGER_ID = M.EMPLOYEE_ID
-GROUP BY E.FirstName,M.FirstName;
+GROUP BY M.FirstName;
 
 /*●	Find all employees whose names are exactly 5 characters*/
 SELECT FirstName FROM EMPLOYEE
@@ -238,28 +238,16 @@ ON E.DEPARTMENT_ID = D.DEPARMENT_ID
 GROUP BY E.DEPARTMENT_ID);
 
 /*Create a transaction that deletes the information from the tables, drop all the tables and reroll the transaction at the end of the process*/
-CREATE PROCEDURE DropTable_DeleteInformation
-AS
-BEGIN 
-    TRUNCATE TABLE Clients,
-    TRUNCATE TABLE Department,
-    TRUNCATE TABLE Employee,
-    Drop table Clients,
-    Drop table Department,
-    Drop table Employee CASCADE CONSTRAINTS;
-END; 
-
-EXECUTE DeleteInformation_DropTable;
+BEGIN
 
 SAVEPOINT < BeforeRollBack >;
-
     Drop table Clients,
     Drop table Department,
     Drop table Employee CASCADE CONSTRAINTS;
     
 ROLLBACK [TO SAVEPOINT < BeforeRollBack>]; 
-
-
+END;
+    
 
 
 
